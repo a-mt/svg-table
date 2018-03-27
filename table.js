@@ -12,6 +12,18 @@ function Table(opts) {
     selection.each(function(dataset){
       var svg, container;
 
+      var nRow       = dataset.value.length,
+          nCol       = dataset.value[0].length,
+          width      = dataset.width,
+          height     = dataset.height;
+
+      if(!width) {
+        width = 50 * (nCol+1);
+      }
+      if(!height) {
+        height = 50 * (nRow+1);
+      }
+
       // Svg + padding
       container = svg = d3.select(this).selectAll(':scope > svg');
 
@@ -24,14 +36,12 @@ function Table(opts) {
      } else {
         container = svg.selectAll(':scope > g');
      }
-     svg.attr('width', dataset.width || 600)
-        .attr('height', dataset.height || 250);
+     svg.attr('width', width)
+        .attr('height', height);
 
       // Table cells
-      var nRow       = dataset.value.length,
-          nCol       = dataset.value[0].length,
-          cellWidth  = Math.floor((dataset.width - opts.padding.left - opts.padding.right) / (nCol + 1)),
-          cellHeight = Math.floor((dataset.height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
+      var cellWidth  = Math.floor((width - opts.padding.left - opts.padding.right) / (nCol + 1)),
+          cellHeight = Math.floor((height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
 
       // Create groups for cells
       var rowHeaders = container.selectAll(':scope > g.row-headers').data([1]),
