@@ -36,6 +36,7 @@ function create_table(e) {
   window.dataset = {
     width: opts.width,
     height: opts.height,
+    header_width: opts.header_width,
     value: value
   };
   window.builder = window.Table();
@@ -87,7 +88,7 @@ function handle_editCell() {
     if(e.target.nodeName == "rect") {
       edit_cell(e.target);
 
-    } else if(target) {
+    } else if(e.target != input) {
       set_cell();
       input.style.display = "none";
     }

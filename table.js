@@ -12,17 +12,15 @@ function Table(opts) {
     selection.each(function(dataset){
       var svg, container;
 
-      var nRow       = dataset.value.length,
-          nCol       = dataset.value[0].length,
-          width      = dataset.width,
-          height     = dataset.height;
+      var nRow        = dataset.value.length,
+          nCol        = dataset.value[0].length,
+          width       = dataset.width,
+          height      = dataset.height,
+          headerWidth = dataset.header_width;
 
-      if(!width) {
-        width = 50 * (nCol+1);
-      }
-      if(!height) {
-        height = 50 * (nRow+1);
-      }
+      width       = width ? parseInt(width, 10) : 50 * (nCol+1);
+      height      = height ? parseInt(height, 10) : 50 * (nRow+1);
+      headerWidth = headerWidth ? parseInt(headerWidth, 10) : false;
 
       // Svg + padding
       container = svg = d3.select(this).selectAll(':scope > svg');
@@ -40,8 +38,16 @@ function Table(opts) {
         .attr('height', height);
 
       // Table cells
-      var cellWidth  = Math.floor((width - opts.padding.left - opts.padding.right) / (nCol + 1)),
+      var cellWidth  = (width - opts.padding.left - opts.padding.right),
           cellHeight = Math.floor((height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
+
+      if(headerWidth) {
+        cellWidth   -= headerWidth;
+        cellWidth    = Math.floor(cellWidth / nCol);
+      } else {
+        cellWidth    = Math.floor(cellWidth / (nCol + 1));
+        headerWidth  = cellWidth;
+      }
 
       // Create groups for cells
       var rowHeaders = container.selectAll(':scope > g.row-headers').data([1]),
@@ -64,7 +70,7 @@ function Table(opts) {
 
         d3.select(this).selectAll('rect')
           .attr('class', ADD_CLASS ? 'row-header-cell' : null)
-          .attr('width', cellWidth)
+          .attr('width', headerWidth)
           .attr('height', cellHeight)
           .attr('x', 0)
           .attr('y', (i+1) * cellHeight)
@@ -75,7 +81,7 @@ function Table(opts) {
           .attr('class', ADD_CLASS ? 'row-header-content' : null)
           .attr('x', 0)
           .attr('y', (i+1) * cellHeight)
-          .attr('dx', cellWidth / 2)
+          .attr('dx', headerWidth / 2)
           .attr('dy', (cellHeight / 2) + 5)
           .style('fill', 'black')
           .style('text-anchor', 'middle');
@@ -95,14 +101,14 @@ function Table(opts) {
           .attr('class', ADD_CLASS ? 'col-header-cell' : null)
           .attr('width', cellWidth)
           .attr('height', cellHeight)
-          .attr('x', (i+1) * cellWidth)
+          .attr('x', i * cellWidth + headerWidth)
           .attr('y', 0)
           .style('fill', '#eee')
           .style('stroke', 'silver');
   
         d3.select(this).selectAll('text')
           .attr('class', ADD_CLASS ? 'col-header-content' : null)
-          .attr('x', (i+1) * cellWidth)
+          .attr('x', i * cellWidth + headerWidth)
           .attr('y', 0)
           .attr('dx', cellWidth / 2)
           .attr('dy', (cellHeight / 2) + 5)
@@ -136,14 +142,14 @@ function Table(opts) {
                 .attr('class', ADD_CLASS ? 'cell' : null)
                 .attr('width', cellWidth)
                 .attr('height', cellHeight)
-                .attr('x', (i+1) * cellWidth)
+                .attr('x', i * cellWidth + headerWidth)
                 .attr('y', (row_i+1) * cellHeight)
                 .style('fill', isHeader ? '#eee' : 'white')
                 .style('stroke', 'silver');
 
             d3.select(this).selectAll('text')
                 .attr('class', ADD_CLASS ? 'cell-content' : null)
-                .attr('x', (i+1) * cellWidth)
+                .attr('x', i * cellWidth + headerWidth)
                 .attr('y', (row_i+1) * cellHeight)
                 .attr('dx', isHeader ? cellWidth / 2 : 7)
                 .attr('dy', (cellHeight / 2) + 5)
