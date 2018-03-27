@@ -1,146 +1,181 @@
 /* global d3 */
 
-var ADD_CLASS = false;
+window.onload = function(){
+  document.getElementById("form").addEventListener("submit", create_table);
+  document.getElementById("add_column").addEventListener("click", edit_table);
+  document.getElementById("add_row").addEventListener("click", edit_table);
+  document.getElementById("add_row_headers").addEventListener("click", edit_table);
 
-function Table(opts) {
-  opts = Object.assign({
-    width: 200,
-    height: 200,
-    padding: {top: 0, right: 0, bottom: 0, left: 0}
-  }, opts);
-  
-  return function(selection) {
-    selection.each(function(dataset){
-
-      // Svg + padding
-      var svg = d3.select(this).append('svg')
-                  .attr('width', opts.width)
-                  .attr('height', opts.height)
-                  .attr('xmlns', 'http://www.w3.org/2000/svg')
-                  .attr('version', '1.1')
-                  .append('g')
-                  .attr('transform', 'translate(' + opts.padding.left + ',' + opts.padding.top + ')');
-
-      // Table cells
-      var cellWidth  = Math.floor((opts.width - opts.padding.left - opts.padding.right) / (dataset.value[0].length + 1)),
-          cellHeight = Math.floor((opts.height - opts.padding.top - opts.padding.bottom) / (dataset.value.length + 1));
-
-      var headers = svg.append('g').attr('class', 'chart-group'),
-          rows    = svg.append('g').attr('class', 'chart-group');
-
-      // Headers for each row
-      var rowHeaders = headers.append('g').attr('class', ADD_CLASS ? 'row-header' : null);
-
-      rowHeaders.selectAll('rect')
-        .data(dataset.rowLabel)
-        .enter()
-        .append('rect')
-          .attr('class', ADD_CLASS ? 'row-header-cell' : null)
-          .attr('width', cellWidth)
-          .attr('height', cellHeight)
-          .attr('x', 0)
-          .attr('y', function(d, i){ return (i+1) * cellHeight; })
-          .style('fill', '#eee')
-          .style('stroke', 'silver');
-
-      rowHeaders.selectAll('text')
-        .data(dataset.rowLabel)
-        .enter()
-        .append('text')
-          .attr('class', ADD_CLASS ? 'row-header-content' : null)
-          .attr('x', 0)
-          .attr('y', function(d, i){ return (i+1) * cellHeight; })
-          .attr('dx', cellWidth / 2)
-          .attr('dy', (cellHeight / 2) + 5)
-          .style('fill', 'black')
-          .style('text-anchor', 'middle')
-          .text(function(d, i){ return d; });
-
-      // Headers for each column
-      var colHeaders = headers.append('g').attr('class', ADD_CLASS ? 'col-header' : null);
-
-      colHeaders.selectAll('rect')
-        .data(dataset.columnLabel)
-        .enter()
-        .append('rect')
-          .attr('class', ADD_CLASS ? 'col-header-cell' : null)
-          .attr('width', cellWidth)
-          .attr('height', cellHeight)
-          .attr('y', 0)
-          .attr('x', function(d, i){ return (i+1) * cellWidth; })
-          .style('fill', '#eee')
-          .style('stroke', 'silver');
-
-      colHeaders.selectAll('text')
-        .data(dataset.columnLabel)
-        .enter()
-        .append('text')
-          .attr('class', ADD_CLASS ? 'col-header-content' : null)
-          .attr('y', 0)
-          .attr('x', function(d, i){ return (i+1) * cellWidth; })
-          .attr('dx', cellWidth / 2)
-          .attr('dy', (cellHeight / 2) + 5)
-          .style('fill', 'black')
-          .style('text-anchor', 'middle')
-          .text(function(d, i){ return d; });
-
-    // Rows
-    rows.selectAll('g')
-      .data(dataset.value)
-      .enter()
-      .append('g')
-        .attr('class', ADD_CLASS ? 'row' : null)
-        .each(function(row_d, row_i){
-
-       // Cells
-       var cells = d3.select(this);
-
-       cells.selectAll('rect')
-         .data(row_d)
-         .enter()
-            .append('rect')
-            .attr('class', ADD_CLASS ? 'cell' : null)
-            .attr('width', cellWidth)
-            .attr('height', cellHeight)
-            .attr('x', function(d, i){ return (i+1) * cellWidth; })
-            .attr('y', function(d, i){ return (row_i+1) * cellHeight; })
-            .style('fill', 'white')
-            .style('stroke', 'silver');
-
-        cells.selectAll('text')
-          .data(row_d)
-          .enter()
-            .append('text')
-            .attr('class', ADD_CLASS ? 'cell-content' : null)
-            .attr('width', cellWidth)
-            .attr('height', cellHeight)
-            .attr('x', function(d, i){ return (i+1) * cellWidth; })
-            .attr('y', function(d, i){ return (row_i+1) * cellHeight; })
-            .attr('dx', 7)
-            .attr('dy', (cellHeight / 2) + 5)
-            .style('fill', 'black')
-            .style('text-anchor', 'start')
-            .html(function(d, i){
-              if(typeof d == "string") {
-                return d.replace(/<b>/g, '<tspan style="font-weight: bold">')
-                        .replace(/<\/b>/g, '</tspan>');
-              } else {
-                return d;
-              }
-            });
-      });
-    });
-  };
-}
-
-var dataset = {
-    rowLabel: ['A', 'B', 'C', 'D', 'E'],
-    columnLabel: ['P', 'Q', 'R', 'S'],
-    value: [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]]
+  handle_export();
+  handle_editCell();
 };
 
-var table = Table({width: 600, height: 250});
+//+--------------------------------------------------------
+//| CREATE SVG TABLE
+//+--------------------------------------------------------
+function create_table(e) {
+  e.preventDefault();
 
-d3.select('body')
-    .datum(dataset)
-    .call(table);
+  // Get submitted options values
+  var opts = {};
+  for(var k in this.elements){
+    if(!this.hasOwnProperty(k) || !this.elements[k].name) continue;
+
+    opts[this.elements[k].name] = this.elements[k].value;
+  }
+
+  // Create emtpy dataset
+  var nRow  = parseInt(opts.rows, 10),
+      nCol  = parseInt(opts.columns, 10),
+      value = [];
+
+  for(var i=0; i<nRow; i++) {
+    value.push(Array(nCol).fill(0));
+  }
+
+  window.dataset = {
+    width: opts.width,
+    height: opts.height,
+    value: value
+  };
+  window.builder = window.Table();
+  refresh_table();
+  document.getElementById('container').style.display = null;
+}
+
+//+--------------------------------------------------------
+//| EDIT SVG TABLE (ADD COLUMN, RESET...)
+//+--------------------------------------------------------
+function edit_table(e) {
+  e.preventDefault();
+
+  switch(e.explicitOriginalTarget.id) {
+    case "add_column":
+      window.dataset.value.forEach(function(row){
+        row.push(row[0]);
+      });
+      refresh_table();
+      break;
+
+    case "add_row":
+      window.dataset.value.push(window.dataset.value[0].slice());
+      refresh_table();
+      break;
+
+    case "add_row_headers":
+      window.dataset.value.push(window.dataset.value[0].slice().fill(1));
+      refresh_table();
+      break;
+  }
+}
+
+function refresh_table() {
+  d3.select('#container')
+      .datum(window.dataset)
+      .call(window.builder);
+}
+
+//+--------------------------------------------------------
+//| ADD EVENTS AND HANDLE CELL TEXT EDITING
+//+--------------------------------------------------------
+function handle_editCell() {
+  var input  = document.getElementById('input'),
+      target = false;
+
+  // Show input
+  document.body.addEventListener("click", function(e){
+    if(e.target.nodeName == "rect") {
+      edit_cell(e.target);
+
+    } else if(target) {
+      set_cell();
+      input.style.display = "none";
+    }
+  });
+
+  // Set text
+  input.addEventListener("keydown", function(e){
+    e.key == "Tab" && e.preventDefault();
+  });
+  input.addEventListener("blur", function(e){
+    set_cell();
+  });
+  input.addEventListener("keyup", function(e) {
+    if(e.key !== "Enter" && e.key != "Tab") return;
+
+    set_cell();
+
+    if(e.key == "Tab") {
+      if(target.parentNode.nextElementSibling) { // Next cell
+        return edit_cell(target.parentNode.nextElementSibling.firstChild);
+
+      } else if (target.parentNode.parentNode.classList.contains("row") && target.parentNode.parentNode.nextElementSibling) { // Next row
+        return edit_cell(target.parentNode.parentNode.nextElementSibling.firstChild.firstChild);
+      }
+    }
+    this.style.display = "none";
+  });
+
+  function set_cell() {
+    target.nextElementSibling.innerHTML = get_text(input.value);
+  }
+  function edit_cell(_target) {
+    target = _target;
+  
+    input.style.top     = target.getAttribute('y') + 'px';
+    input.style.left    = target.getAttribute('x') + 'px';
+    input.style.width   = target.getAttribute('width') + 'px';
+    input.style.height  = target.getAttribute('height') + 'px';
+    input.value         = target.nextElementSibling
+                                .innerHTML
+                                .replace(/<tspan style="font-weight: bold">/g, "<b>")
+                                .replace(/<\/tspan>/g, "</b>");
+    input.style.display = "block";
+    input.focus();
+  }
+
+  function get_text(d) {
+    return d.replace(/<b>/g, '<tspan style="font-weight: bold">')
+            .replace(/<\/b>/g, '</tspan>');
+  }
+}
+
+//+--------------------------------------------------------
+//| COPY HTML
+//+--------------------------------------------------------
+function handle_export() {
+  var copy = new window.Clipboard("#export", {
+    text: function(trigger) {
+      return document.getElementsByTagName('svg')[0].outerHTML
+                     .replace(/<g><rect/g, '<rect')
+                     .replace(/<\/text><\/g>/g, '</text>');
+    },
+    target: function(trigger) {
+      return trigger;
+    }
+  });
+
+  copy.on('success', function(e) {
+    e.clearSelection();
+    feedback();
+  });
+}
+
+//+--------------------------------------------------------
+//| FEEDBACK BUBBLE
+//+--------------------------------------------------------
+var feedback_timer = null;
+function feedback() {
+  var div = document.getElementById('feedback');
+
+  if(feedback_timer) {
+    clearTimeout(feedback_timer);
+  } else {
+    div.classList.add('show');
+  }
+
+  feedback_timer = setTimeout(function(){
+    feedback_timer = false;
+    div.classList.remove('show');
+  }.bind(this), 1000);
+}

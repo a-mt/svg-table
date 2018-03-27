@@ -3,9 +3,46 @@
   <head>
     <meta charset="UTF-8">
     <title>SVG Table</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.16/clipboard.min.js"></script>
   </head>
   <body>
+    <div id="opts">
+      <form id="form">
+        <div>
+          <label for="width">Width</label>
+          <input id="width" name="width" type="number" min="1" value="600">
+        </div>
+        <div>
+          <label for="height">Height</label>
+          <input id="height" name="height" type="number" min="1" value="250">
+        </div>
+        <div>
+          <label for="columns">Number of columns</label>
+          <input id="columns" name="columns" type="number" min="1" value="4">
+        </div>
+        <div>
+          <label for="rows">Number of rows</label>
+          <input id="rows" name="rows" type="number" min="1" value="5">
+        </div>
+        <div class="actions">
+          <input type="submit">
+        </div>
+      </form>
+    </div>
+    <div id="feedback">Copied to clipboard</div>
+
+    <div id="container" style="display: none">
+      <input type="text" id="input" value="">
+
+      <button id="add_row" title="Add row">&plus;</button>
+      <button id="add_row_headers" title="Add row of headers">&plus;</button>
+      <button id="add_column" title="add column">&plus;</button>
+      <button id="export">Export SVG</button>
+    </div>
+
+    <script src="/table.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>
