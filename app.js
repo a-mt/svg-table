@@ -63,7 +63,8 @@ function create_table(e) {
   if(window.dataset) {
     refreshTspan = dataset.height != window.dataset.height
                     || dataset.line_height != window.dataset.height
-                    || dataset.valign != window.dataset.valign;
+                    || dataset.valign != window.dataset.valign
+                    || dataset.row_header_align != window.dataset.row_header_align;
   }
   window.dataset = dataset;
   window.builder = window.Table();
@@ -79,6 +80,8 @@ function create_table(e) {
     for(let i=0; i<nodes.length; i++) {
       var node  = nodes[i],
           dy    = node.getAttribute('dy'),
+          dx    = node.getAttribute('dx'),
+          x     = node.getAttribute('x'),
           start = dy;
 
       if(window.dataset.valign == "middle") {
@@ -86,6 +89,8 @@ function create_table(e) {
       }
       for(let j=0; j<node.children.length; j++) {
         node.children[j].setAttribute('dy', j==0 ? start : window.dataset.line_height);
+        node.children[j].setAttribute('dx', dx);
+        node.children[j].setAttribute('x', x);
       }
     }
   }
