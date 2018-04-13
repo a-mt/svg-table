@@ -190,8 +190,10 @@ function handle_editCell() {
   function text_to_svg(d, x, dx, dy) {
     d = d.replace(/</g, '\u03A9&lt;')
          .replace(/>/g, '&gt;')
-         .replace(/&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>')
-         .replace(/&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
+
+         .replace(/\u03A9&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>')
+         .replace(/\u03A9&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
+         .replace(/\u03A9&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>') // italic that contains bold
          .replace(/\u03A9/g, '');
 
     var lines = d.split('&lt;br&gt;');
@@ -199,9 +201,7 @@ function handle_editCell() {
       return d;
     }
 
-    var i     = 0,
-        start = dy;
-
+    var i = 0, start = dy;
     if(window.dataset.valign == "middle") {
       start -= (lines.length / 2) * window.dataset.line_height/2;
     }
@@ -210,10 +210,15 @@ function handle_editCell() {
 
   // Translate SVG innerHTML to plainText
   function svg_to_text(d) {
-    d = d.replace(/<tspan style="font-weight: bold">([^<]+)<\/tspan>/g, '<b>$1</b>')
-         .replace(/<tspan style="font-style: italic">([^<]+)<\/tspan>/g, '<i>$1</i>')
+    d = d.replace(/</g, '\u03A9<')
+         .replace(/\u03A9<tspan style="font-style: italic">([^\u03A9]+)\u03A9<\/tspan>/g, '<i>$1</i>')
+         .replace(/\u03A9<tspan style="font-weight: bold">([^\u03A9]+)\u03A9<\/tspan>/g, '<b>$1</b>')
+         .replace(/\u03A9<tspan style="font-style: italic">([^\u03A9]+)\u03A9<\/tspan>/g, '<i>$1</i>') // italic that contains bold
+         .replace(/\u03A9/g, '')
+
          .replace(/<tspan[^>]*>/g, '<br>')
          .replace(/<\/tspan>/g, '')
+
          .replace(/&lt;/g, '<')
          .replace(/&gt;/g, '>')
          .replace(/^<br>/, '');
