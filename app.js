@@ -32,33 +32,63 @@ function create_table(e) {
   }
 
   // Create emtpy dataset
-  var nRow  = parseInt(opts.rows, 10),
-      nCol  = parseInt(opts.columns, 10),
-      value = [];
+  var nRow         = parseInt(opts.rows, 10),
+      nCol         = parseInt(opts.columns, 10),
+      value        = [],
+      line_height  = parseInt(opts.line_height, 10) || 19,
+      refreshTspan = false;
 
   if(window.dataset) {
     value = window.dataset.value.slice(0, nRow).map(row => Array(nCol).fill(row[0]));
 
-    for(var i=value.length; i<nRow; i++) {
+    for(let i=value.length; i<nRow; i++) {
       value.push(Array(nCol).fill(0));
     }
+
   } else {
-    for(var i=0; i<nRow; i++) {
+    for(let i=0; i<nRow; i++) {
       value.push(Array(nCol).fill(0));
     }
   }
 
-  window.dataset = {
+  var dataset = {
     width: opts.width,
     height: opts.height_of == "row" ? opts.height * (nRow+1) : opts.height,
     row_header_width: opts.row_header_width,
     row_header_align: opts.row_header_align,
     valign: opts.valign,
+    line_height: line_height,
     value: value
   };
+  if(window.dataset) {
+    refreshTspan = dataset.height != window.dataset.height
+                    || dataset.line_height != window.dataset.height
+                    || dataset.valign != window.dataset.valign;
+  }
+  window.dataset = dataset;
   window.builder = window.Table();
   refresh_table();
   document.getElementById('container').style.display = null;
+
+  // Refresh position of multi-line text
+  if(refreshTspan) {
+    var nodes = Array.from(document.body.querySelectorAll('tspan[dy]'))
+                     .map((node) => node.parentNode)
+                     .filter(function(item, pos, self) { return self.indexOf(item) == pos; });
+
+    for(let i=0; i<nodes.length; i++) {
+      var node  = nodes[i],
+          dy    = node.getAttribute('dy'),
+          start = dy;
+
+      if(window.dataset.valign == "middle") {
+        start -= (node.children.length / 2) * window.dataset.line_height/2;
+      }
+      for(let j=0; j<node.children.length; j++) {
+        node.children[j].setAttribute('dy', j==0 ? start : window.dataset.line_height);
+      }
+    }
+  }
 }
 
 //+--------------------------------------------------------
@@ -140,7 +170,8 @@ function handle_editCell() {
     }
     target.nextElementSibling.innerHTML = text_to_svg(input.value,
       target.nextElementSibling.getAttribute("x"),
-      target.nextElementSibling.getAttribute("dx")
+      target.nextElementSibling.getAttribute("dx"),
+      target.nextElementSibling.getAttribute("dy")
     );
   }
   function edit_cell(_target) {
@@ -156,18 +187,25 @@ function handle_editCell() {
   }
 
   // Translate user's text to SVG
-  function text_to_svg(d, x, dx) {
+  function text_to_svg(d, x, dx, dy) {
     d = d.replace(/</g, '\u03A9&lt;')
          .replace(/>/g, '&gt;')
-         .replace(/&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
          .replace(/&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>')
+         .replace(/&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
          .replace(/\u03A9/g, '');
 
     var lines = d.split('&lt;br&gt;');
     if(lines.length == 1) {
       return d;
     }
-    return lines.map(p => '<tspan dy="1.2em" x="' + x + '" dx="' + dx + '">' + p + '</tspan>').join("\n");
+
+    var i     = 0,
+        start = dy;
+
+    if(window.dataset.valign == "middle") {
+      start -= (lines.length / 2) * window.dataset.line_height/2;
+    }
+    return lines.map(p => `<tspan x="${x}" dx="${dx}" dy="${(i++ == 0 ? start : window.dataset.line_height)}">` + p + '</tspan>').join("\n");
   }
 
   // Translate SVG innerHTML to plainText
