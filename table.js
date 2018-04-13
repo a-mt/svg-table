@@ -12,15 +12,18 @@ function Table(opts) {
     selection.each(function(dataset){
       var svg, container;
 
-      var nRow        = dataset.value.length,
-          nCol        = dataset.value[0].length,
-          width       = dataset.width,
-          height      = dataset.height,
-          headerWidth = dataset.header_width;
+      var nRow           = dataset.value.length,
+          nCol           = dataset.value[0].length,
+          width          = dataset.width,
+          height         = dataset.height,
+          rowHeaderWidth = dataset.row_header_width,
+          rowHeaderAlign = dataset.row_header_align,
+          vAlign         = dataset.valign,
+          TOP            = 17;
 
-      width       = width ? parseInt(width, 10) : 50 * (nCol+1);
-      height      = height ? parseInt(height, 10) : 50 * (nRow+1);
-      headerWidth = headerWidth ? parseInt(headerWidth, 10) : false;
+      width          = width ? parseInt(width, 10) : 50 * (nCol+1);
+      height         = height ? parseInt(height, 10) : 50 * (nRow+1);
+      rowHeaderWidth = rowHeaderWidth ? parseInt(rowHeaderWidth, 10) : false;
 
       // Svg + padding
       container = svg = d3.select(this).selectAll(':scope > svg');
@@ -38,15 +41,15 @@ function Table(opts) {
         .attr('height', height);
 
       // Table cells
-      var cellWidth  = (width - opts.padding.left - opts.padding.right),
-          cellHeight = Math.floor((height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
+      var cellWidth    = (width - opts.padding.left - opts.padding.right),
+          cellHeight   = Math.floor((height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
 
-      if(headerWidth) {
-        cellWidth   -= headerWidth;
-        cellWidth    = Math.floor(cellWidth / nCol);
+      if(rowHeaderWidth) {
+        cellWidth     -= rowHeaderWidth;
+        cellWidth      = Math.floor(cellWidth / nCol);
       } else {
-        cellWidth    = Math.floor(cellWidth / (nCol + 1));
-        headerWidth  = cellWidth;
+        cellWidth      = Math.floor(cellWidth / (nCol + 1));
+        rowHeaderWidth = cellWidth;
       }
 
       // Create groups for cells
@@ -70,7 +73,7 @@ function Table(opts) {
 
         d3.select(this).selectAll('rect')
           .attr('class', ADD_CLASS ? 'row-header-cell' : null)
-          .attr('width', headerWidth)
+          .attr('width', rowHeaderWidth)
           .attr('height', cellHeight)
           .attr('x', 0)
           .attr('y', (i+1) * cellHeight)
@@ -81,10 +84,10 @@ function Table(opts) {
           .attr('class', ADD_CLASS ? 'row-header-content' : null)
           .attr('x', 0)
           .attr('y', (i+1) * cellHeight)
-          .attr('dx', headerWidth / 2)
-          .attr('dy', (cellHeight / 2) + 5)
+          .attr('dx', rowHeaderAlign == "center" ? rowHeaderWidth / 2 : (rowHeaderAlign == "left" ? 7 : rowHeaderWidth - 7))
+          .attr('dy', vAlign == "middle" ? (cellHeight / 2) + 5 : TOP)
           .style('fill', 'black')
-          .style('text-anchor', 'middle');
+          .style('text-anchor', rowHeaderAlign == "center" ? 'middle' : (rowHeaderAlign == "left" ? "start" : "end"));
       });
 
       // Headers for each column
@@ -101,17 +104,17 @@ function Table(opts) {
           .attr('class', ADD_CLASS ? 'col-header-cell' : null)
           .attr('width', cellWidth)
           .attr('height', cellHeight)
-          .attr('x', i * cellWidth + headerWidth)
+          .attr('x', i * cellWidth + rowHeaderWidth)
           .attr('y', 0)
           .style('fill', '#eee')
           .style('stroke', 'silver');
   
         d3.select(this).selectAll('text')
           .attr('class', ADD_CLASS ? 'col-header-content' : null)
-          .attr('x', i * cellWidth + headerWidth)
+          .attr('x', i * cellWidth + rowHeaderWidth)
           .attr('y', 0)
           .attr('dx', cellWidth / 2)
-          .attr('dy', (cellHeight / 2) + 5)
+          .attr('dy', vAlign == "middle" ? (cellHeight / 2) + 5 : TOP)
           .style('fill', 'black')
           .style('text-anchor', 'middle');
       });
@@ -142,17 +145,17 @@ function Table(opts) {
                 .attr('class', ADD_CLASS ? 'cell' : null)
                 .attr('width', cellWidth)
                 .attr('height', cellHeight)
-                .attr('x', i * cellWidth + headerWidth)
+                .attr('x', i * cellWidth + rowHeaderWidth)
                 .attr('y', (row_i+1) * cellHeight)
                 .style('fill', isHeader ? '#eee' : 'white')
                 .style('stroke', 'silver');
 
             d3.select(this).selectAll('text')
                 .attr('class', ADD_CLASS ? 'cell-content' : null)
-                .attr('x', i * cellWidth + headerWidth)
+                .attr('x', i * cellWidth + rowHeaderWidth)
                 .attr('y', (row_i+1) * cellHeight)
                 .attr('dx', isHeader ? cellWidth / 2 : 7)
-                .attr('dy', (cellHeight / 2) + 5)
+                .attr('dy', vAlign == "middle" ? (cellHeight / 2) + 5 : TOP)
                 .style('fill', 'black')
                 .style('text-anchor', isHeader ? 'middle' : null);
               });

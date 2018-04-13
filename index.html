@@ -10,30 +10,63 @@
   <body>
     <div id="opts">
       <form id="form">
-        <div>
-          <label for="width">Width</label>
-          <input id="width" name="width" type="number" min="0" value="600">
-        </div>
-        <div>
-          <label for="height">Height</label>
-          <input id="height" name="height" type="number" min="0" value="250">
-        </div>
-        <div>
-          <label for="header_width">Row header width</label>
-          <input id="header_width" name="header_width" type="number" min="0" value="">
-        </div>
-        <div>
-          <label for="columns">Number of columns</label>
-          <input id="columns" name="columns" type="number" min="1" value="4">
-        </div>
-        <div>
-          <label for="rows">Number of rows</label>
-          <input id="rows" name="rows" type="number" min="1" value="5">
-        </div>
+
+        <fieldset>
+          <div>
+            <label for="width">Width</label>
+            <input id="width" name="width" type="number" min="0" value="600">
+          </div>
+          <div>
+            <label for="row_header_width">1st column (header) width</label>
+            <input id="row_header_width" name="row_header_width" type="number" min="0" value="">
+          </div>
+          <div>
+            <label for="row_header_align">1st column alignment</label>
+            <select id="row_header_align" name="row_header_align">
+              <option value="center">Center</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <div>
+            <label for="height">Height</label>
+            <input id="height" name="height" type="number" min="0" value="50">
+          </div>
+          <div>
+            <label for="height_of">Height of</label>
+            <select id="height_of" name="height_of">
+              <option value="row">One row</option>
+              <option value="full">Full table</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <div>
+            <label for="columns">Number of columns</label>
+            <input id="columns" name="columns" type="number" min="1" value="4">
+          </div>
+          <div>
+            <label for="rows">Number of rows</label>
+            <input id="rows" name="rows" type="number" min="1" value="5">
+          </div>
+          <div>
+            <label for="valign">Vertical alignment</label>
+            <select id="valign" name="valign">
+              <option value="middle">Middle</option>
+              <option value="top">Top</option>
+            </select>
+          </div>
+        </fieldset>
+
         <div class="actions">
           <input type="submit">
         </div>
       </form>
+      <button type="button" id="toggle" title="Toggle">⇱</button>
     </div>
     <div id="feedback">Copied to clipboard</div>
 

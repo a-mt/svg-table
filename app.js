@@ -1,6 +1,13 @@
 /* global d3 */
 
 window.onload = function(){
+  document.getElementById("toggle").addEventListener("click", function(){
+    if(this.previousElementSibling.style.display == "none") {
+      this.previousElementSibling.style.display = "block";
+    } else {
+      this.previousElementSibling.style.display = "none";
+    }
+  });
   document.getElementById("form").addEventListener("submit", create_table);
   document.getElementById("add_column").addEventListener("click", edit_table);
   document.getElementById("add_row").addEventListener("click", edit_table);
@@ -29,14 +36,24 @@ function create_table(e) {
       nCol  = parseInt(opts.columns, 10),
       value = [];
 
-  for(var i=0; i<nRow; i++) {
-    value.push(Array(nCol).fill(0));
+  if(window.dataset) {
+    value = window.dataset.value.slice(0, nRow).map(row => Array(nCol).fill(row[0]));
+
+    for(var i=value.length; i<nRow; i++) {
+      value.push(Array(nCol).fill(0));
+    }
+  } else {
+    for(var i=0; i<nRow; i++) {
+      value.push(Array(nCol).fill(0));
+    }
   }
 
   window.dataset = {
     width: opts.width,
-    height: opts.height,
-    header_width: opts.header_width,
+    height: opts.height_of == "row" ? opts.height * (nRow+1) : opts.height,
+    row_header_width: opts.row_header_width,
+    row_header_align: opts.row_header_align,
+    valign: opts.valign,
     value: value
   };
   window.builder = window.Table();
@@ -88,7 +105,7 @@ function handle_editCell() {
     if(e.target.nodeName == "rect") {
       edit_cell(e.target);
 
-    } else if(e.target != input) {
+    } else if(e.target != input && e.target.nodeName != "BUTTON") {
       set_cell();
       input.style.display = "none";
     }
@@ -118,7 +135,13 @@ function handle_editCell() {
   });
 
   function set_cell() {
-    target.nextElementSibling.innerHTML = get_text(input.value);
+    if(!target.nextElementSibling) {
+      return;
+    }
+    target.nextElementSibling.innerHTML = text_to_svg(input.value,
+      target.nextElementSibling.getAttribute("x"),
+      target.nextElementSibling.getAttribute("dx")
+    );
   }
   function edit_cell(_target) {
     target = _target;
@@ -127,17 +150,36 @@ function handle_editCell() {
     input.style.left    = target.getAttribute('x') + 'px';
     input.style.width   = target.getAttribute('width') + 'px';
     input.style.height  = target.getAttribute('height') + 'px';
-    input.value         = target.nextElementSibling
-                                .innerHTML
-                                .replace(/<tspan style="font-weight: bold">/g, "<b>")
-                                .replace(/<\/tspan>/g, "</b>");
+    input.value         = svg_to_text(target.nextElementSibling.innerHTML);
     input.style.display = "block";
     input.focus();
   }
 
-  function get_text(d) {
-    return d.replace(/<b>/g, '<tspan style="font-weight: bold">')
-            .replace(/<\/b>/g, '</tspan>');
+  // Translate user's text to SVG
+  function text_to_svg(d, x, dx) {
+    d = d.replace(/</g, '\u03A9&lt;')
+         .replace(/>/g, '&gt;')
+         .replace(/&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
+         .replace(/&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>')
+         .replace(/\u03A9/g, '');
+
+    var lines = d.split('&lt;br&gt;');
+    if(lines.length == 1) {
+      return d;
+    }
+    return lines.map(p => '<tspan dy="1.2em" x="' + x + '" dx="' + dx + '">' + p + '</tspan>').join("\n");
+  }
+
+  // Translate SVG innerHTML to plainText
+  function svg_to_text(d) {
+    d = d.replace(/<tspan style="font-weight: bold">([^<]+)<\/tspan>/g, '<b>$1</b>')
+         .replace(/<tspan style="font-style: italic">([^<]+)<\/tspan>/g, '<i>$1</i>')
+         .replace(/<tspan[^>]*>/g, '<br>')
+         .replace(/<\/tspan>/g, '')
+         .replace(/&lt;/g, '<')
+         .replace(/&gt;/g, '>')
+         .replace(/^<br>/, '');
+    return d;
   }
 }
 
