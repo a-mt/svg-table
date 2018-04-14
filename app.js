@@ -237,9 +237,14 @@ function handle_editCell() {
 function handle_export() {
   var copy = new window.Clipboard("#export", {
     text: function(trigger) {
-      return document.getElementsByTagName('svg')[0].outerHTML
-                     .replace(/<g><rect/g, '<rect')
-                     .replace(/<\/text><\/g>/g, '</text>');
+      var html = document.getElementsByTagName('svg')[0].outerHTML;
+
+      if(window.dataset.row_header_width === "0") {
+        html = html.replace(/<g class="row-headers">.*<g class="col-headers">/, '<g class="col-headers">');
+      }
+
+      return html.replace(/<g><rect/g, '<rect')
+                 .replace(/<\/text><\/g>/g, '</text>');
     },
     target: function(trigger) {
       return trigger;

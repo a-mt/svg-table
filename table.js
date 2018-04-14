@@ -44,7 +44,7 @@ function Table(opts) {
       var cellWidth    = (width - opts.padding.left - opts.padding.right),
           cellHeight   = Math.floor((height - opts.padding.top - opts.padding.bottom) / (nRow + 1));
 
-      if(rowHeaderWidth) {
+      if(rowHeaderWidth !== false) {
         cellWidth     -= rowHeaderWidth;
         cellWidth      = Math.floor(cellWidth / nCol);
       } else {
