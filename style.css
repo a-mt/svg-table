@@ -37,7 +37,12 @@ input[type="submit"]:hover {
 }
 text, tspan {
   pointer-events: none;
+}
+text {
   font-size: 16px;
+}
+tspan {
+  font-size: inherit;
 }
 
 #toggle {

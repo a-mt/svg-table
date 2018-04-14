@@ -193,14 +193,30 @@ function handle_editCell() {
 
   // Translate user's text to SVG
   function text_to_svg(d, x, dx, dy) {
-    d = d.replace(/</g, '\u03A9&lt;')
-         .replace(/>/g, '&gt;')
 
-         .replace(/\u03A9&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>')
-         .replace(/\u03A9&lt;b&gt;([^\u03A9]+)\u03A9&lt;\/b&gt;/g, '<tspan style="font-weight: bold">$1</tspan>')
-         .replace(/\u03A9&lt;i&gt;([^\u03A9]+)\u03A9&lt;\/i&gt;/g, '<tspan style="font-style: italic">$1</tspan>') // italic that contains bold
-         .replace(/\u03A9/g, '');
+    // Turn < > into &lt; &gt;
+    d = d.replace(/<(\/?(?:b|i|small))>/g, '\u000A&lt;$1&gt;')
+         .replace(/</g, '&lt;')
+         .replace(/>/g, '&gt;');
 
+    // Convert <i> and </b> to tspans
+    var r;
+    do {
+      r = false;
+      d = d.replace(/\u000A&lt;b&gt;([^\u000A]+)\u000A&lt;\/b&gt;/g, function(match, txt) { r = true;
+        return '<tspan style="font-weight: bold">' + txt + '</tspan>';
+      });
+      d = d.replace(/\u000A&lt;i&gt;([^\u000A]+)\u000A&lt;\/i&gt;/g, function(match, txt){ r = true;
+        return '<tspan style="font-style: italic">' + txt + '</tspan>';
+      });
+      d = d.replace(/\u000A&lt;small&gt;([^\u000A]+)\u000A&lt;\/small&gt;/g, function(match, txt) { r = true;
+        return '<tspan style="font-size: 0.8em" fill="#808080">' + txt + '</tspan>';
+      });
+    } while(r);
+
+    d = d.replace(/\u000A/g, '');
+
+    // Split <br> into several tspans
     var lines = d.split('&lt;br&gt;');
     if(lines.length == 1) {
       return d;
@@ -215,18 +231,33 @@ function handle_editCell() {
 
   // Translate SVG innerHTML to plainText
   function svg_to_text(d) {
-    d = d.replace(/</g, '\u03A9<')
-         .replace(/\u03A9<tspan style="font-style: italic">([^\u03A9]+)\u03A9<\/tspan>/g, '<i>$1</i>')
-         .replace(/\u03A9<tspan style="font-weight: bold">([^\u03A9]+)\u03A9<\/tspan>/g, '<b>$1</b>')
-         .replace(/\u03A9<tspan style="font-style: italic">([^\u03A9]+)\u03A9<\/tspan>/g, '<i>$1</i>') // italic that contains bold
-         .replace(/\u03A9/g, '')
+    d = d.replace(/</g, '\u03A9<');
 
-         .replace(/<tspan[^>]*>/g, '<br>')
+    // Convert tpsans to <i> and </b>
+    var r;
+    do {
+      r = false;
+      d = d.replace(/\u03A9<tspan style="font-weight: bold">([^\u03A9]+)\u03A9<\/tspan>/g, function(match, txt){ r = true;
+        return '<b>' + txt + '</b>';
+      });
+      d = d.replace(/\u03A9<tspan style="font-style: italic">([^\u03A9]+)\u03A9<\/tspan>/g, function(match, txt){ r = true;
+        return '<i>' + txt + '</i>';
+      });
+      d = d.replace(/\u03A9<tspan style="font-size: 0.8em[^"]*"[^>]*>([^\u03A9]+)\u03A9<\/tspan>/g, function(match, txt){ r = true;
+        return '<small>' + txt + '</small>';
+      });
+    } while(r);
+
+    d = d.replace(/\u03A9/g, '');
+
+    // Replace other tspans to <br> (multiline)
+    d = d.replace(/<tspan[^>]*>/g, '<br>')
+         .replace(/^<br>/, '')
          .replace(/<\/tspan>/g, '')
 
+         // Turn &lt; &gt; into < >
          .replace(/&lt;/g, '<')
-         .replace(/&gt;/g, '>')
-         .replace(/^<br>/, '');
+         .replace(/&gt;/g, '>');
     return d;
   }
 }
